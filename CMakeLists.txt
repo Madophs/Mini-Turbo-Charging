@@ -13,7 +13,7 @@ add_subdirectory(EPM)
 add_executable(Mini_Turbo_Charging main.cpp)
 
 target_compile_options(Mini_Turbo_Charging PRIVATE -g)
-target_link_libraries(Mini_Turbo_Charging PUBLIC pthread EPM_Conf)
+target_link_libraries(Mini_Turbo_Charging PUBLIC pthread EPM_Conf EPM_Events)
 #target_link_libraries(Mini_Turbo_Charging PUBLIC EPM_Conf)
 
 configure_file(MTC_Version.h.in MTC_Version.h)
