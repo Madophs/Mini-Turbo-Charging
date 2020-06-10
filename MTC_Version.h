@@ -1,0 +1,2 @@
+#define MTC_VERSION_MAJOR 1
+#define MTC_VERSION_MINOR 0

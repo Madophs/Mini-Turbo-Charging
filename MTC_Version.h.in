@@ -1,0 +1,2 @@
+#define MTC_VERSION_MAJOR @Mini_Turbo_Charging_VERSION_MAJOR@
+#define MTC_VERSION_MINOR @Mini_Turbo_Charging_VERSION_MINOR@
