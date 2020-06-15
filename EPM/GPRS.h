@@ -10,7 +10,7 @@
 
 class GPRS : public Event {
 	public:
-		GPRS(unsigned int target_source_ = 0, unsigned int data_consumed = 0, std::string website = "undefined");
+		GPRS(unsigned int target_source = 0, unsigned int data_consumed = 0, std::string website = "undefined");
 
 		unsigned int getTargetSource() const;
 		void setTargetSource(unsigned int target_source);
