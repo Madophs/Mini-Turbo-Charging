@@ -1,7 +1,7 @@
 #include "Conf.h"
 #include <fstream>
 #include <sstream>
-#include "Utils.h"
+#include "Utility.h"
 
 EPM_Conf::EPM_Conf() {
 	this->config_file_path_ = "./epm.properties";
@@ -58,7 +58,7 @@ void EPM_Conf::assignProperties(std::string &property_name, std::string &propert
 	if (property_name ==	"epm.input.events.location") {
 		input_event_file_location_ = property_value;
 	} else if (property_name == "epm.sleep.time") {
-		if (Utils::isNumber(property_value)) {
+		if (Utility::isNumber(property_value)) {
 			sleep_time_ = std::atoi(property_value.c_str());
 		} else {
 			std::cerr << "Value not valid" << std::endl;
