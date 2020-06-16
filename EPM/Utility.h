@@ -33,7 +33,15 @@ namespace Utility {
 	 *
 	 * Date format. Example: y/m/d
 	 */
+
 	int setDate(std::string date, tm &struct_datetime, std::string format = "y/m/d", char separator = '/');
+
+	/*
+	 * Trims trailing and leading whitepaces from a std::string
+	 *
+	 */
+	
+	void trim(std::string &str_value);
 }
 
 #endif

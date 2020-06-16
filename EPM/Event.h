@@ -11,13 +11,14 @@ class Event {
 		Event(std::string event_type, std::string unit_type);
 
 		std::string getEventType() const;
-		void setEventType(std::string new_event_type);
+		void setEventType(std::string event_type);
 
 		std::string getUnitType() const;
-		void setUnitType(std::string new_unit_type);
+		void setUnitType(std::string unit_type);
 
 		tm &getStartTime();
-		void setStartTime(tm new_start_time);
+		void setStartTime(tm start_time);
+		void setStartTime(std::string start_time);
 
 	protected:
 

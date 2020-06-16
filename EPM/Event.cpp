@@ -1,5 +1,6 @@
 #include "Event.h"
 #include <cstring>
+#include "Utility.h"
 
 Event::Event() {
 	this->event_type_ = "unknown";
@@ -39,3 +40,6 @@ void Event::setStartTime(tm new_start_time) {
 	this->start_time_ = new_start_time;
 }
 
+void Event::setStartTime(std::string start_time) {
+	Utility::setDatetime(start_time, this->start_time_, "d/m/y h/m/s");
+}

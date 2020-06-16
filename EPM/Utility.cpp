@@ -102,3 +102,11 @@ int Utility::setTime(std::string time, tm &datetime, std::string format, char se
 	}
 	return SUCCESS;
 }
+
+void Utility::trim(std::string &str_value) {
+	while (!str_value.empty() && str_value.back() == ' ')
+		str_value.pop_back();
+	while (!str_value.empty() && str_value.front() == ' ')
+		str_value.erase(str_value.begin());
+}
+
