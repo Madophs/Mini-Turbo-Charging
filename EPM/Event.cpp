@@ -1,13 +1,16 @@
- #include "Event.h"
+#include "Event.h"
+#include <cstring>
 
 Event::Event() {
 	this->event_type_ = "unknown";
 	this->unit_type_ = "undefined";
+	memset((void *) &start_time_, 0, sizeof(start_time_));
 }
 
 Event::Event(std::string event_type, std::string unit_type) {
 	this->event_type_ = event_type;
 	this->unit_type_ = unit_type;
+	memset((void *) &start_time_, 0, sizeof(start_time_));
 }
 
 /* Getters and Setters */
