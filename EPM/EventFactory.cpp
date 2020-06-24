@@ -6,7 +6,6 @@
 #define MAX_LENGTH 50
 #define MAX_INTERGER_LENGTH 10
 
-
 Event * EventFactory::createEvent(std::string event_type, std::string unit_type) {
 	return new Event(event_type, unit_type);
 }
@@ -110,7 +109,7 @@ void EventFactory::parseEventData(std::string &event_data) {
 		errors |= (1u);
 	} else {
 		Utility::trim(data_consumed_);
-		if(!Utility::isNumber(data_consumed_) || MAX_INTERGER_LENGTH) {
+		if(!Utility::isNumber(data_consumed_) || data_consumed_.length() > MAX_INTERGER_LENGTH) {
 			/* Invalid Target value */
 			errors |= (1u << 4);
 		}
