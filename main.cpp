@@ -1,16 +1,61 @@
 #include <iostream>
-#include "EPM/Conf.h"
+#include "EPM/EPM.h"
 
 using namespace std;
 
+void createTablesSchemes(bool flag = true);
+
 int main() {
-	std::cout << "Esperemos que esto funciones" << std::endl;
-	EPM_Conf::readConfigFile();
-	cout << "Username " << EPM_Conf::getDBUsername() << endl;
-	cout << "Password " << EPM_Conf::getDBPassword() << endl;
-	cout << "Service " << EPM_Conf::getDBService() << endl;
-	cout << "Sleep time " << EPM_Conf::getSleepTime() << endl;
-	cout << "Input " << EPM_Conf::getInputEventFileLocation() << endl;
-	cout << "Processed location " << EPM_Conf::getProcessedEventFileLocation() << endl;
+	createTablesSchemes(false);
+	EPM epm;
+	epm.start();
+	ACE_Thread_Manager::instance()->wait();
 	return 0;
+}
+
+void createTablesSchemes(bool flag) {
+	DB db;
+	EPM_Conf::setConfigFileLocation("/home/madophs/Documents/git/Mini-Turbo-Charging/epm.properties");
+	EPM_Conf::readConfigFile();
+	db.setPort(EPM_Conf::getDBPort());
+	db.setDBName(EPM_Conf::getDBName());
+	db.setUsername(EPM_Conf::getDBUsername());
+	db.setPassword(EPM_Conf::getDBPassword());
+	db.connect();
+	string sql = "";
+	string sql_drop = "DROP TABLE IF EXISTS event_rate;";
+	sql = sql + "CREATE TABLE event_rate(" +
+		"id SERIAL  PRIMARY KEY NOT NULL," +
+		"event_type VARCHAR(8)," +
+		"effective_date DATE," +
+		"uom VARCHAR(12)," +
+		"unit_amount INTEGER," +
+		"unit_rate INTEGER);";
+	if (flag) {
+		db.execSQLStmt(sql_drop);
+		db.execSQLStmt(sql);
+	}
+	sql_drop = "DROP TABLE IF EXISTS rated_event";
+	sql = "";
+	sql = sql + "CREATE TABLE rated_event(" +
+		"id SERIAL PRIMARY KEY NOT NULL," +
+		"event_type VARCHAR(256)," +
+		"target_source INTEGER," +
+		"event_start_time TIMESTAMP," +
+		"event_unit_consumed REAL," +
+		"total_charge REAL);";
+	db.execSQLStmt(sql_drop);
+	db.execSQLStmt(sql);
+	sql_drop = "DROP TABLE IF EXISTS rejected_event";
+	sql = "";
+	sql = sql + "CREATE TABLE rejected_event(" +
+		"id SERIAL PRIMARY KEY NOT NULL," +
+		"event_type VARCHAR(256)," +
+		"target_source INTEGER," +
+		"event_start_time TIMESTAMP," +
+		"event_unit_consumed REAL," +
+		"rejected_reason VARCHAR(256));";
+	db.execSQLStmt(sql_drop);
+	db.execSQLStmt(sql);
+	db.disconnect();
 }

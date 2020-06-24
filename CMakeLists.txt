@@ -16,7 +16,7 @@ add_executable(Mini_Turbo_Charging main.cpp)
 add_library(Mini_Turbo_Charging_lib main.cpp)
 
 target_compile_options(Mini_Turbo_Charging PRIVATE -g)
-target_link_libraries(Mini_Turbo_Charging PUBLIC EventThreads pthread DB  pqxx pq EPM_Conf EPM_Events ACE)
+target_link_libraries(Mini_Turbo_Charging PUBLIC EPM_Module EventThreads pthread DB  pqxx pq EPM_Conf EPM_Events ACE)
 
 configure_file(MTC_Version.h.in MTC_Version.h)
 
