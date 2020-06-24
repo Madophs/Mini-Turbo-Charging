@@ -1,7 +1,7 @@
 #ifndef EVENT_RATE_H
 #define EVENT_RATE_H
 
-#include "../Database/DB.h"
+#include "../DB/DB.h"
 #include "Event.h"
 #include <ctime>
 #include <vector>
