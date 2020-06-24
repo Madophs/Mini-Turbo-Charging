@@ -18,15 +18,16 @@ class ReadEventsThread : public ACE_Task<ACE_MT_SYNCH> {
 		 *
 		 */
 		ReadEventsThread(CreateEventThread *create_event_thread);
+		~ReadEventsThread();
 		int open(void*);
 		int svc(void);
 		int close(u_long);
 	private:
 		std::queue<std::string> files_queue;
 		CreateEventThread *event_creator_;
-		ACE_Message_Block * mb_event_data_;
 		void readFiles();
 		void addFilesToQueue();
+		ACE_thread_t *threads_ids_;
 };
 
 #endif

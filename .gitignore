@@ -12,3 +12,4 @@ _deps
 build
 epm.properties
 test
+.vscode
