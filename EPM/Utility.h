@@ -4,13 +4,20 @@
 #include <iostream>
 
 namespace Utility {
-	bool isNumber(std::string value);
 
 	/*
-	 * Set Datetime attributes to the give datetime struct
+	 * Check if the give string only constains digits
+	 * 
+	 */
+
+	bool isNumber(std::string &value);
+
+	/*
+	 * Set Datetime attributes to the given datetime struct
 	 *
 	 * Example: 30/05/2020 10:11:12 d/m/y h/m/s
 	 *
+	 * returns: 0 Success, 1 Fail, 2 Invalid value, 3 Out of range
 	 */
 
 	int setDatetime(std::string datetime,
@@ -24,6 +31,7 @@ namespace Utility {
 	 *
 	 * Time format. Example: h:m:s
 	 *
+	 * returns: 0 Success, 1 Fail, 2 Invalid value, 3 Out of range
 	 */
 
 	int setTime(std::string time, tm &struct_datetime, std::string format = "h/m/s", char separator = ':');
@@ -32,6 +40,8 @@ namespace Utility {
 	 * Sets date attributes to the give struct
 	 *
 	 * Date format. Example: y/m/d
+	 * 
+	 * returns: 0 Success, 1 Fail, 2 Invalid value, 3 Out of range
 	 */
 
 	int setDate(std::string date, tm &struct_datetime, std::string format = "y/m/d", char separator = '/');
