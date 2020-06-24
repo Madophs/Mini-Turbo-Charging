@@ -102,11 +102,13 @@ void PrepareEvent::process_event(Event *event, RatedEvent &rated_event) {
 			rated_event.total_charge = (rated_event.event_unit_consumed * event_rate.getUnitRate());
 		}
 	}
-	/* SQL statement */
-	std::string sql_stmt = generateSQLStmt(rated_event, event);
+	if (db_management_ != nullptr) {
+		/* SQL statement */
+		std::string sql_stmt = generateSQLStmt(rated_event, event);
 
-	/* add to DB queue */
-	addToDBQueue(sql_stmt);
+		/* add to DB queue */
+		addToDBQueue(sql_stmt);
+	}
 }
 
 void PrepareEvent::addToDBQueue(std::string &sql_stmt) {

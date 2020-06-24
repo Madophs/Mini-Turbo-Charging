@@ -8,4 +8,4 @@ add_executable(${BINARY} ${TEST_SOURCES})
 
 add_test(NAME ${BINARY} COMMAND ${BINARY})
 
-target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib gtest EventThreads pthread DB  pqxx pq EPM_Conf EPM_Events ACE)
+target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib gtest EPM_Module EventThreads pthread DB  pqxx pq EPM_Conf EPM_Events ACE)

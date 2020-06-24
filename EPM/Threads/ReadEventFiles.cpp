@@ -1,4 +1,5 @@
 #include "ReadEventFiles.h"
+#include "../Utility.h"
 #include <fstream>
 #include <dirent.h>
 #include <cstdio>
@@ -63,11 +64,12 @@ void ReadEventsThread::readFiles() {
 
 		while (getline(file_reader, line)) {
 
+			/* Trim whitespaces */
+			Utility::trim(line);
+
 			/* Skip empty lines */
 			if (line.empty()) continue;
 
-			/* Skip lines containing only spaces */
-			if (line.find_last_of(' ') == line.length()-1) continue;
 
 			/* Buffer with the event data */
 			char *buf_event_data = new char[line.length()+1];

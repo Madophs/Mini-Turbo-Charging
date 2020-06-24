@@ -49,7 +49,7 @@ TEST(rating_test, test1) {
     /* Load information from database (EVENT_RATE table) */
     EventRateScheme::updateScheme();
 
-    prepare_event = new PrepareEvent(nullptr);
+    prepare_event = new PrepareEvent();
 
     /* Test start here */
     i_test("GSM,2532,10/09/2015 10:12:00,200,2025550147", "Hello world");
