@@ -2,38 +2,31 @@
 #include "EventRate.h"
 
 EPM::EPM() {
-    db_thread_ = new DBManagement();
-	pe_thread_ = new PrepareEvent(db_thread_);
-	ce_thread_ = new CreateEventThread(pe_thread_);
-	re_thread_ = new ReadEventsThread(ce_thread_);
+    this->db_t_ = new DBManagement();
+	this->prepare_events_t_ = new PrepareEvent(db_t_);
+	this->create_events_t_ = new CreateEventThread(prepare_events_t_);
+	this->read_events_t_ = new ReadEventsThread(create_events_t_);
     this->threads_running_ = false;
+	this->threads_joinable_ = true;
 }
 
 EPM::~EPM() {
-    if (db_thread_)
-        delete db_thread_;
-    if (pe_thread_)
-        delete pe_thread_;
-    if (ce_thread_)
-        delete ce_thread_;
-    if (re_thread_)
-        delete re_thread_;
+    if (db_t_)
+        delete db_t_;
+    if (prepare_events_t_)
+        delete prepare_events_t_;
+    if (create_events_t_)
+        delete create_events_t_;
+    if (read_events_t_)
+        delete read_events_t_;
 }
 
 void EPM::start() {
-    if (threads_running_) return;
-    EPM_Conf::setConfigFileLocation("/home/madophs/Documents/git/Mini-Turbo-Charging/epm.properties");
-	EPM_Conf::readConfigFile();
-    if (!testDBConnection()) {
-        std::cerr << "Cannot connect to DB" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    EventRateScheme::updateScheme();
-    db_thread_->open(0);
-	pe_thread_->open(0);
-	ce_thread_->open(0);
-	re_thread_->open(0);
-    threads_running_ = true;
+	instance().i_start();
+}
+
+void EPM::wait() {
+	instance().i_wait();
 }
 
 bool EPM::testDBConnection() {
@@ -43,5 +36,37 @@ bool EPM::testDBConnection() {
 	db.setPassword(EPM_Conf::getDBPassword());
 	db.setPort(EPM_Conf::getDBPort());
 	db.connect();
-    return db.isConnected();
+	bool is_db_connected = db.isConnected();
+
+	/* close db connection */
+	db.disconnect();
+    return is_db_connected;
+}
+
+void EPM::i_start() {
+    if (threads_running_) return;
+    if (!testDBConnection()) {
+        std::cerr << "Cannot connect to DB" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    EventRateScheme::updateScheme();
+    db_t_->open(0);
+	prepare_events_t_->open(0);
+	create_events_t_->open(0);
+	read_events_t_->open(0);
+    threads_running_ = true;
+}
+
+void EPM::i_wait() {
+	/* first check if the threads are running and are joinable */
+	if (threads_running_ && threads_joinable_) {
+		/* Wait for threads to finish */
+		db_t_->wait();
+		prepare_events_t_->wait();
+		create_events_t_->wait();
+		read_events_t_->wait();
+
+		/* Threads are not joinable anymore */
+		threads_joinable_ = false;
+	}
 }
