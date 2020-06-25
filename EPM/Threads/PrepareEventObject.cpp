@@ -16,6 +16,10 @@ PrepareEvent::PrepareEvent(DBManagement *db_management) {
 	this->db_management_ = db_management;
 }
 
+void PrepareEvent::setDBManagement(DBManagement *db_management) {
+	this->db_management_ = db_management;
+}
+
 int PrepareEvent::open(void *) {
 	ACE_DEBUG((LM_INFO, "(%t) Prepare event thread\n"));
 	activate(THR_NEW_LWP, 1);
@@ -24,9 +28,9 @@ int PrepareEvent::open(void *) {
 
 int PrepareEvent::svc() {
 	if (!db_management_)
-		return 0;
+		return 1;
 	int process_count = 0;
-	ACE_DEBUG((LM_DEBUG, "(%t) Prepare Event Thread\n"));
+	ACE_DEBUG((LM_INFO, "(%t) Prepare Event Thread\n"));
 	while(true) {
 
 		/* if no events to process, take a nap */
@@ -56,6 +60,13 @@ void PrepareEvent::process_queue_events() {
 
 	process_event(event,rated_event);
 
+	/* SQL statement */
+	std::string sql_stmt = generateSQLStmt(rated_event, event);
+
+	/* add to DB queue */
+	addToDBQueue(sql_stmt);
+
+	/* free some memory (event no longer required) */
 	delete event;
 }
 
@@ -102,24 +113,26 @@ void PrepareEvent::process_event(Event *event, RatedEvent &rated_event) {
 			rated_event.total_charge = (rated_event.event_unit_consumed * event_rate.getUnitRate());
 		}
 	}
-	if (db_management_ != nullptr) {
-		/* SQL statement */
-		std::string sql_stmt = generateSQLStmt(rated_event, event);
-
-		/* add to DB queue */
-		addToDBQueue(sql_stmt);
-	}
 }
 
 void PrepareEvent::addToDBQueue(std::string &sql_stmt) {
-	char *buffer = new char[sql_stmt.length()+1];
-	strcpy(buffer, sql_stmt.c_str());
-	ACE_Message_Block *mb_sql_stmt = new ACE_Message_Block(buffer, sizeof(buffer));
+
+	/* Create a buffer that is going to contain the sql stmt */
+	char *buff_sql_stmt = new char[sql_stmt.length()+1];
+
+	/* Copy the contents of the SQL statement to the buffer */
+	strcpy(buff_sql_stmt, sql_stmt.c_str());
+
+	/* Create a new message block containing the buffer */
+	ACE_Message_Block *mb_sql_stmt = new ACE_Message_Block(buff_sql_stmt, sizeof(buff_sql_stmt));
+
+	/* Add message block to DB queue */
 	db_management_->putq(mb_sql_stmt);
 }
 
 std::string PrepareEvent::generateSQLStmt(RatedEvent &rated_event, Event *&event) {
 	std::string sql_stmt = "";
+
 	/* if event is accepted insert in rated_event table otherwise rejected_event table */
 	if (rated_event.accepted) {
 		sql_stmt = sql_stmt + "INSERT INTO rated_event (event_type, target_source, event_start_time, event_unit_consumed, total_charge) " +

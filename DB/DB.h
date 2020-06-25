@@ -5,6 +5,9 @@
 #include <memory>
 #include "../EPM/Conf.h"
 
+/*
+ * Implements Database management functionability
+ */
 class DB {
 	public:
 
@@ -17,8 +20,17 @@ class DB {
 
 		/* Execute SQL statement */
 		void execSQLStmt(std::string sql_stmt);
+
+		/*
+		 * @return connection reference
+		 */
 		pqxx::connection &getConnection();
 
+		/*
+		 * @param table - name of table to be consulted
+		 *
+		 * @return postgreSQL result object containg all the records in the table
+		 */
 		pqxx::result select(std::string table);
 		
 		std::string getDBName() const;
@@ -43,6 +55,7 @@ class DB {
 		/* Database connection pointer */
 		std::unique_ptr<pqxx::connection> conn_;
 
+		/* Database required field to establish connection */
 		std::string db_name_;
 		std::string db_user_;
 		std::string db_password_;

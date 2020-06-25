@@ -40,9 +40,14 @@ void CreateEventThread::handleEventData() {
 		Event *event = event_factory.createEventFromUnparsedData(mb_event_data->rd_ptr());
 
 		/* Add event to Prepare event queue */
-		this->lock_.acquire();
-		prepare_event_->event_queue.push(event);
-		this->lock_.release();
+		if (NUMBER_OF_THREADS > 1) {
+			/* If 2 or more threads are accessing to queue implement the use of locks */
+			this->lock_.acquire();
+			prepare_event_->event_queue.push(event);
+			this->lock_.release();
+		} else {
+			prepare_event_->event_queue.push(event);
+		}
 
 		if (++created_events_count % 1000 == 0)
 			ACE_OS::sleep(1);

@@ -12,14 +12,36 @@
 /* forward declaration */
 struct RatedEvent;
 
+/*
+ * Rate and prepare the events
+ */
 class PrepareEvent : public ACE_Task<ACE_MT_SYNCH> {
 	public:
 		PrepareEvent(DBManagement *db_management);
 		PrepareEvent();
+		
+		/*
+		 * Set the DB Management to with rated events will be sent
+		 */
+		void setDBManagement(DBManagement *db_management);
+
+		/* Spawn threads */
 		int open(void*);
+
+		/* Thread entry point */
 		int svc(void);
 		int close(u_long);
+
+		/* 
+		 * Rate the events and set the values in rated_event struct
+		 */
 		void process_event(Event *event, RatedEvent &rated_event);
+
+		/*
+		 * This is function is only for testing purposes
+		 *
+		 * @return a rated event info
+		 */
 		std::string rate_event_test(RatedEvent &rated_event);
 		
 		/* Underlying queue to receive event object pointers */

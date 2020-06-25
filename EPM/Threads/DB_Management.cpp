@@ -11,7 +11,7 @@ DBManagement::~DBManagement() {
 }
 
 int DBManagement::open(void *) {
-    ACE_DEBUG((LM_DEBUG, "(%t) Starting DB thread\n"));
+    ACE_DEBUG((LM_INFO, "(%t) Starting DB thread\n"));
     activate(THR_NEW_LWP, 1);
     return 0;
 }
@@ -23,12 +23,13 @@ int DBManagement::svc(void) {
 }
 
 int DBManagement::close(ulong) {
-    ACE_DEBUG((LM_DEBUG, "(%t) Closing DB thread\n"));
+    ACE_DEBUG((LM_INFO, "(%t) Closing DB thread\n"));
     return 0;
 }
 
 void DBManagement::handleInsertionRequest() {
     mb_sql_stmt_ = nullptr;
+
     /* Receive SQL statement ready for insertion */
     getq(mb_sql_stmt_);
     db_->execSQLStmt(mb_sql_stmt_->rd_ptr());

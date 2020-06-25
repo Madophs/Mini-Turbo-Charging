@@ -22,8 +22,11 @@ class EventRate {
 		tm getEffectiveDate() const;
 		void setEffectiveDate(tm effective_data);
 
-		/* Unit of Measure */
+		/*
+		 * @return Unit of Measure
+		 */
 		std::string getUOM() const;
+
 		void setUOM(std::string uom);
 
 		int getUnitAmount() const;
@@ -37,6 +40,7 @@ class EventRate {
 	private:
 		std::string event_type_;
 		tm effective_date_;
+
 		/* Unit of Measure */
 		std::string uom_;
 		int unit_amount_;
@@ -61,7 +65,13 @@ class EventRateScheme {
 		 * Otherwise return false
 		 */
 		static bool findEffectiveDate(EventRate &event_rate_search);
+
+		/* fetch new records from event_rate table */
 		static void updateScheme();
+
+		/* 
+		 * @return current records in the event_rate scheme
+		 */
 		static std::vector<EventRate> getRecords();
 	private:
 		EventRateScheme();

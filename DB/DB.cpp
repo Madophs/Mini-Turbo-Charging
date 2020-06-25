@@ -47,6 +47,10 @@ bool DB::isConnected() {
 	return conn_ != nullptr && conn_->is_open();
 }
 
+pqxx::connection &DB::getConnection() {
+	return *conn_;
+}
+
 void DB::execSQLStmt(std::string sql_stmt) {
 	if (!isConnected()) {
 		std::cerr << "Please established a connection first" << std::endl;

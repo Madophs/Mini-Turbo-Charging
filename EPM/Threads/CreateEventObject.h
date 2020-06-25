@@ -8,6 +8,10 @@
 #include "../EventFactory.h"
 #include "PrepareEventObject.h"
 
+/* 
+ * This class start threads that continously
+ * receive event data and parse it to an Event object
+ */
 class CreateEventThread : public ACE_Task<ACE_MT_SYNCH> {
 	public:
 		CreateEventThread(PrepareEvent *prepare_event);

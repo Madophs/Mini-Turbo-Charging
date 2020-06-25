@@ -9,6 +9,9 @@
 #include "../../EPM/Conf.h"
 #include "CreateEventObject.h"
 
+/*
+ * This class implements reading events from files functionability
+ */
 class ReadEventsThread : public ACE_Task<ACE_MT_SYNCH> {
 	public:
 
@@ -19,8 +22,13 @@ class ReadEventsThread : public ACE_Task<ACE_MT_SYNCH> {
 		 */
 		ReadEventsThread(CreateEventThread *create_event_thread);
 		~ReadEventsThread();
+		
+		/* Create threads */
 		int open(void*);
+
+		/* Entry point for threas */
 		int svc(void);
+
 		int close(u_long);
 	private:
 		std::queue<std::string> files_queue;

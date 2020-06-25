@@ -6,10 +6,9 @@ using namespace std;
 void createTablesSchemes(bool flag = true);
 
 int main() {
-	createTablesSchemes(false);
-	EPM epm;
-	epm.start();
-	ACE_Thread_Manager::instance()->wait();
+	//createTablesSchemes(false);
+	EPM::start();
+	EPM::wait();
 	return 0;
 }
 

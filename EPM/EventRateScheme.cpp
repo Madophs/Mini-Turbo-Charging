@@ -13,9 +13,15 @@ bool EventRateScheme::findEffectiveDate(EventRate &event_rate_search) {
 	EventRate ER_search = event_rate_search;
 	bool eff_date_found = false;
 
-	/* Linear scan, find the effective */
+	/* Linear scan, find the effective date */
 	for (EventRate &event_rate_iter : instance().event_rate_rec_) {
+
+		/* Check if event types are the same */
 		if (ER_search.getEventType() == event_rate_iter.getEventType()) {
+			/*
+			 * Check if effective date is less , this means that can be applied to our current event date
+			 * but we need to find the closest one
+			 */
 			if (event_rate_iter <= ER_search) {
 				/* if effective date found update the event_rate_search */
 				event_rate_search = event_rate_iter;
@@ -56,7 +62,8 @@ void EventRateScheme::iUpdateScheme() {
 
 	/* Iterate through records */
     for (pqxx::result::const_iterator record = results.begin(); record != results.end(); ++record) {
-		/* Get event rate values */
+
+		/* Get and parse event rate values */
 		event_type = record[1].as<std::string>();
 		effective_date_str = record[2].as<std::string>();
 		tm effective_date;
@@ -77,7 +84,7 @@ void EventRateScheme::iUpdateScheme() {
 		event_rate_rec_.push_back(event_rate);
     }
 	
-	/* Sort records based on effective and and event_type */
+	/* Sort records based on effective and event_type criteria */
 	sort(event_rate_rec_.begin(), event_rate_rec_.end());
 
 	/* Close connection */
