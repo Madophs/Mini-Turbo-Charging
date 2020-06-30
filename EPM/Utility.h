@@ -52,6 +52,11 @@ namespace Utility {
 	 */
 	
 	void trim(std::string &str_value);
+
+	/*
+	 * Parse arguments passed in command line
+	 */
+	void parseArgs(int argc, char *argv[]);
 }
 
 #endif

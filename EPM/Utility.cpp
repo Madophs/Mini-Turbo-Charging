@@ -1,4 +1,6 @@
 #include "Utility.h"
+#include "Conf.h"
+#include <ace/Arg_Shifter.h>
 #include <sstream>
 #include <algorithm>
 #define ARRAY_SIZE 6 
@@ -214,3 +216,35 @@ void Utility::trim(std::string &str_value) {
 		str_value.erase(str_value.begin());
 }
 
+
+void Utility::parseArgs(int argc, char *argv[]) {
+	/* if no arguments return */
+	if (argc == 1)
+		return;
+
+	ACE_Arg_Shifter args(argc, argv);
+
+	/* Always consumed the first argument (Name of the program) */
+	args.consume_arg();
+
+	while (args.is_anything_left()) {
+		const char * current_arg = args.get_current();
+
+		if (ACE_OS::strcmp(current_arg, "--epm-conf") == 0) {
+			args.consume_arg();
+			if (!args.is_anything_left() || args.is_option_next()) {
+				std::cout << "Usage --epm-conf \"Path to EPM conf file\"" << std::endl;
+			} else {
+				EPM_Conf::setConfigFileLocation(args.get_current());
+			}
+		} else if (ACE_OS::strcmp(current_arg, "-h") == 0 || ACE_OS::strcmp(current_arg, "--help") == 0) {
+				std::cout << "Usage [program] --epm-conf \"Path to EPM conf file\"" << std::endl;
+				exit(EXIT_SUCCESS);
+		} else {
+			std::cerr << "Unknown option: " << current_arg << std::endl;
+		}
+
+		if (args.is_anything_left())
+			args.consume_arg();
+	}
+}
