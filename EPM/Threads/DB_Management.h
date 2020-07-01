@@ -22,13 +22,13 @@ class DBManagement : public ACE_Task<ACE_MT_SYNCH> {
 		int svc(void);
 		int close(u_long);
 	private:
-        /* SQL statement to be executed */
-		ACE_Message_Block *mb_sql_stmt_;
+        /* Transaction filename cointaining records ready to insert*/
+		ACE_Message_Block *mb_transaction_file_;
         /* Database pointer */
         std::unique_ptr<DB> db_;
         
 		/* 
-		 * Receive sql statement ready for insertion.
+		 * Receive transaction files ready for insertion.
          * 
 		 */
         void handleInsertionRequest();

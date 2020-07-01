@@ -2,6 +2,7 @@
 #define PREPARE_OBJECT_THREAD
 
 #include <iostream>
+#include <fstream>
 #include <ace/OS.h>
 #include <ace/Task.h>
 #include <ace/Message_Block.h>
@@ -35,7 +36,7 @@ class PrepareEvent : public ACE_Task<ACE_MT_SYNCH> {
 		/* 
 		 * Rate the events and set the values in rated_event struct
 		 */
-		void process_event(Event *event, RatedEvent &rated_event);
+		void processEvent(Event *&event, RatedEvent &rated_event);
 
 		/*
 		 * This is function is only for testing purposes
@@ -47,10 +48,30 @@ class PrepareEvent : public ACE_Task<ACE_MT_SYNCH> {
 		/* Underlying queue to receive event object pointers */
 		std::queue<Event *> event_queue;
 	private:
+		/* Current number of rejected events in transaction file */
+		int n_curr_rejected_events_;
+		/* Current number of rated events in transaction file */
+		int n_curr_rated_events_;
+		
+		/* Total number of rejected events */
+		int n_rejected_events_;
+		/* Total number of rated events */
+		int n_rated_events_;
+
+		/* Filewriters for rated and rejected events */
+		std::ofstream rated_event_writer_;
+		std::ofstream rejected_event_writer_;
+
 		DBManagement *db_management_;
-		void process_queue_events();
+		void prepareEvents();
+		void processQueueEvents();
 		void addToDBQueue(std::string &sql_stmt);
+		/* Enqueue and creates a new rejected events transaction file */
+		void processRejectedEventFile();
+		/* Enqueue and create a new rated events transaction file */
+		void processRatedEventFile();
 		std::string generateSQLStmt(RatedEvent &rated_event, Event *&event);
+
 };
 
 /* Struct containing rated event info */

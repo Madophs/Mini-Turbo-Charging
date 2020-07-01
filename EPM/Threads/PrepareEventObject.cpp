@@ -7,13 +7,29 @@
 #include "../../DB/DB.h"
 #include <memory>
 #include <algorithm>
+#define TRANSACTION_SIZE 10000
 
 PrepareEvent::PrepareEvent() {
 	this->db_management_ = nullptr;
+	this->n_curr_rejected_events_ = 0;
+	this->n_curr_rated_events_ = 0;
+	this->n_rejected_events_ = 0;
+	this->n_rated_events_ = 0;
 }
 
 PrepareEvent::PrepareEvent(DBManagement *db_management) {
 	this->db_management_ = db_management;
+	this->n_curr_rejected_events_ = 0;
+	this->n_curr_rated_events_ = 0;
+	this->n_rejected_events_ = 0;
+	this->n_rated_events_ = 0;
+
+	/* Create prepared events folder if not exists */
+	system("mkdir -p events/.prepare_events/in_process events/.prepare_events/ready");
+
+	/* Create and open transaction files */
+	this->rated_event_writer_.open("events/.prepare_events/in_process/rated_events.csv", std::fstream::out | std::fstream::ate | std::fstream::trunc);
+	this->rejected_event_writer_.open("events/.prepare_events/in_process/rejected_events.csv", std::fstream::out | std::fstream::ate | std::fstream::trunc);
 }
 
 void PrepareEvent::setDBManagement(DBManagement *db_management) {
@@ -21,7 +37,6 @@ void PrepareEvent::setDBManagement(DBManagement *db_management) {
 }
 
 int PrepareEvent::open(void *) {
-	ACE_DEBUG((LM_INFO, "(%t) Prepare event thread\n"));
 	activate(THR_NEW_LWP, 1);
 	return 0;
 }
@@ -29,18 +44,12 @@ int PrepareEvent::open(void *) {
 int PrepareEvent::svc() {
 	if (!db_management_)
 		return 1;
-	int process_count = 0;
 	ACE_DEBUG((LM_INFO, "(%t) Prepare Event Thread\n"));
 	while(true) {
-
-		/* if no events to process, take a nap */
-		if (event_queue.empty()) {
-			ACE_OS::sleep(1);
-			continue;
-		}
-		process_queue_events();
-		if (++process_count % 10000 == 0)
-			std::cout << ++process_count << std::endl;
+		prepareEvents();
+		std::cout << n_rejected_events_ << std::endl;
+		if ((n_rated_events_ + n_rejected_events_) % 10000 == 0 && false)
+			std::cout << (n_rated_events_ + n_rejected_events_) << std::endl;
 	}
 	return 0;
 }
@@ -50,7 +59,31 @@ int PrepareEvent::close(u_long) {
 	return 0;
 }
 
-void PrepareEvent::process_queue_events() {
+void PrepareEvent::prepareEvents() {
+	/* if no events to process, take a nap */
+	if (event_queue.empty()) {
+		/* Enqueue remaining events in transaction files */
+		processRatedEventFile();
+		processRejectedEventFile();
+
+		/* Wait for more events */
+		ACE_OS::sleep(EPM_Conf::getSleepTime());
+	} else {
+		processQueueEvents();
+		/* If current number of events reach the transaction size, enqueue this events for insertion */
+		if (n_curr_rated_events_ == TRANSACTION_SIZE) {
+			processRatedEventFile();
+			ACE_OS::sleep(1);
+		}
+
+		if (n_curr_rejected_events_ == TRANSACTION_SIZE) {
+			processRejectedEventFile();
+			ACE_OS::sleep(1);
+		}
+	}
+}
+
+void PrepareEvent::processQueueEvents() {
 	/* receive event and pop it */
 	Event *event = event_queue.front();
 	event_queue.pop();
@@ -58,19 +91,33 @@ void PrepareEvent::process_queue_events() {
 	/* Struct RatedEvent contains all information required to be inserted */
 	RatedEvent rated_event;
 
-	process_event(event,rated_event);
+	/* process (rate) event and save the results in rated_event struct */
+	processEvent(event,rated_event);
 
 	/* SQL statement */
 	std::string sql_stmt = generateSQLStmt(rated_event, event);
 
-	/* add to DB queue */
-	addToDBQueue(sql_stmt);
+	if (rated_event.accepted) {
+		/* if the rated event is accepted, write this record into rated_events.csv transaction file */
+		rated_event_writer_.write(sql_stmt.c_str(), sql_stmt.length());
+		rated_event_writer_.put('\n');
+
+		/* Count how many rated events we have so far */
+		++n_curr_rated_events_, ++n_rated_events_;
+	} else {
+		/* if the rated event is rejected, write this record into rejected_events.csv transaction file */
+		rejected_event_writer_.write(sql_stmt.c_str(), sql_stmt.length());
+		rejected_event_writer_.put('\n');
+
+		/* Count how many rejected events we have so far */
+		++n_curr_rejected_events_, ++n_rejected_events_;
+	}
 
 	/* free some memory (event no longer required) */
 	delete event;
 }
 
-void PrepareEvent::process_event(Event *event, RatedEvent &rated_event) {
+void PrepareEvent::processEvent(Event *&event, RatedEvent &rated_event) {
 	/* Initialize the rated event */
 	rated_event.target_source = event->getTargetSource();
 	rated_event.event_type = event->getEventType();
@@ -115,6 +162,32 @@ void PrepareEvent::process_event(Event *event, RatedEvent &rated_event) {
 	}
 }
 
+void PrepareEvent::processRatedEventFile() {
+	if (n_curr_rated_events_) {
+		rated_event_writer_.close();
+		/* Reset current rated events */
+		n_curr_rated_events_ = 0;
+		/* Move transaction file to ready directory */
+		system("mv events/.prepare_events/in_process/rated_events.csv events/.prepare_events/ready/");
+		/* Enqueue the transaction file into DB Mangement queue */
+		db_management_->putq(new ACE_Message_Block("rated_events.csv"));
+		/* Create and open a new transaction file */
+		this->rated_event_writer_.open("events/.prepare_events/in_process/rated_events.csv");
+	}
+}
+void PrepareEvent::processRejectedEventFile() {
+	if (n_curr_rejected_events_) {
+		rejected_event_writer_.close();
+		/* Reset current rejected events count*/
+		n_curr_rejected_events_ = 0;
+		/* Move transaction file to ready directory */
+		system("mv events/.prepare_events/in_process/rejected_events.csv events/.prepare_events/ready/");
+		/* Enqueue the transaction file into DB Mangement queue */
+		db_management_->putq(new ACE_Message_Block("rejected_events.csv"));
+		/* Create and open a new transaction file */
+		this->rejected_event_writer_.open("events/.prepare_events/in_process/rejected_events.csv");
+	}
+}
 void PrepareEvent::addToDBQueue(std::string &sql_stmt) {
 
 	/* Create a buffer that is going to contain the sql stmt */
@@ -135,15 +208,13 @@ std::string PrepareEvent::generateSQLStmt(RatedEvent &rated_event, Event *&event
 
 	/* if event is accepted insert in rated_event table otherwise rejected_event table */
 	if (rated_event.accepted) {
-		sql_stmt = sql_stmt + "INSERT INTO rated_event (event_type, target_source, event_start_time, event_unit_consumed, total_charge) " +
-			"VALUES ('" + rated_event.event_type + "', " + std::to_string(rated_event.target_source) + ", '" +
-			event->getStartTimeString() + "', " + std::to_string(rated_event.event_unit_consumed) + ", " +
-			std::to_string(rated_event.total_charge) + ");";
+		sql_stmt = rated_event.event_type + "|" + std::to_string(rated_event.target_source) + "|" +
+			event->getStartTimeString() + "|" + std::to_string(rated_event.event_unit_consumed) + "|" +
+			std::to_string(rated_event.total_charge);
 	} else {
-		sql_stmt = sql_stmt + "INSERT INTO rejected_event (event_type, target_source, event_start_time, event_unit_consumed, rejected_reason) " +
-			"VALUES ('" + rated_event.event_type + "', " + std::to_string(rated_event.target_source) + ", '" +
-			event->getStartTimeString() + "', 0, '" +
-			rated_event.rejected_reason + "');";
+		sql_stmt = rated_event.event_type + "|" + std::to_string(rated_event.target_source) + "|" +
+			event->getStartTimeString() + "|0|" +
+			rated_event.rejected_reason;
 	}
 	return sql_stmt;
 }

@@ -6,19 +6,21 @@ DBManagement::DBManagement() {
 }
 
 DBManagement::~DBManagement() {
-    if (mb_sql_stmt_)
-        delete mb_sql_stmt_;
+    if (mb_transaction_file_)
+        delete mb_transaction_file_;
 }
 
 int DBManagement::open(void *) {
-    ACE_DEBUG((LM_INFO, "(%t) Starting DB thread\n"));
     activate(THR_NEW_LWP, 1);
     return 0;
 }
 
 int DBManagement::svc(void) {
-    while (true)
+    ACE_DEBUG((LM_INFO, "(%t) Starting DB thread\n"));
+    while (true) {
         handleInsertionRequest();
+        ACE_OS::sleep(1);
+    }
     return 0;
 }
 
@@ -28,11 +30,21 @@ int DBManagement::close(ulong) {
 }
 
 void DBManagement::handleInsertionRequest() {
-    mb_sql_stmt_ = nullptr;
-
-    /* Receive SQL statement ready for insertion */
-    getq(mb_sql_stmt_);
-    db_->execSQLStmt(mb_sql_stmt_->rd_ptr());
+    /* Receive transaction file */
+    getq(mb_transaction_file_);
+    /* Use Copy command to insert data (is faster than Insert) */
+    std::string copy_command = "";
+    /* Check if transactional file contains rejected or rated events records*/
+    if (ACE_OS::strcmp(mb_transaction_file_->rd_ptr(), "rejected_events.csv") == 0) {
+        /* Construct Copy command for reading and inserting rejected events*/
+        copy_command = "COPY rejected_event (event_type, target_source, event_start_time, event_unit_consumed, rejected_reason) FROM '"
+            + std::string(getenv("PWD")) + "/events/.prepare_events/ready/rejected_events.csv' USING DELIMITERS '|'";
+    } else {
+        /* Construct Copy command for reading and inserting rated events*/
+        copy_command = "COPY rated_event (event_type, target_source, event_start_time, event_unit_consumed, total_charge) FROM '"
+            + std::string(getenv("PWD")) + "/events/.prepare_events/ready/rated_events.csv' USING DELIMITERS '|'";
+    }
+    db_->execSQLStmt(copy_command);
 }
 
 void DBManagement::connectToDB() {

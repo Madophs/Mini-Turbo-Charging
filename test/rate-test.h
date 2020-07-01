@@ -35,7 +35,7 @@ void freeMemory() {
 
 void i_test(std::string event_data, std::string expected_result) {
     event = event_factory.createEventFromUnparsedData(event_data);
-    prepare_event->process_event(event, rated_event);
+    prepare_event->processEvent(event, rated_event);
     EXPECT_EQ(prepare_event->rate_event_test(rated_event), expected_result);
     freeMemory();
 }

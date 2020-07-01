@@ -1,5 +1,5 @@
 #include "CreateEventObject.h"
-#define NUMBER_OF_THREADS 2
+#define NUMBER_OF_THREADS 3
 
 CreateEventThread::CreateEventThread(PrepareEvent *prepare_event) {
 	this->prepare_event_ = prepare_event;
@@ -49,7 +49,7 @@ void CreateEventThread::handleEventData() {
 			prepare_event_->event_queue.push(event);
 		}
 
-		if (++created_events_count % 1000 == 0)
+		if (++created_events_count % 700000 == 0)
 			ACE_OS::sleep(1);
 	}
 	
